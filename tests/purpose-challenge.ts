@@ -40,31 +40,22 @@ describe('purpose_challenge', () => {
     const balance = await provider.connection.getBalance(userKeypair.publicKey);
     console.log(`Initial balance: ${balance / anchor.web3.LAMPORTS_PER_SOL} SOL`);
 
-    // Test data
-    const testName = "Alice";
-
-   // Check if account exists
-    const accountInfo = await provider.connection.getAccountInfo(nameAccountPDA);
     
-    if (!accountInfo) {
-      await program.methods.storeName("Alice")
+    await program.methods.storeName("Alice")
         .accounts({
           nameAccount: nameAccountPDA,
           user: userKeypair.publicKey,
           systemProgram: SystemProgram.programId,
         })
         .rpc();
-    } else {
-      console.log("Account already exists, skipping initialization");
-    }
-    console.log('passed first method')
+      
 
     // Verify the stored name
     const storedName = await program.methods.getName()
       .accounts({ nameAccount: nameAccountPDA })
       .view();
 
-    expect(storedName).to.equal(accountInfo ? "Alice" : "");
+    expect(storedName).to.equal( "Alice" );
     });
 
 });
