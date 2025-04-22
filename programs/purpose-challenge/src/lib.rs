@@ -1,17 +1,17 @@
 use anchor_lang::prelude::*;
 
-declare_id!("9aTf53g8P77aop423jgNCL7hapZ2drU7bnPJxuuudZqe");
+declare_id!("3qJ7i6VosNpuJieRHAywaLjEo8JacU8RSkhxuuG3tPq3");
 
 #[program]
-pub mod name_storage {
+pub mod purpose_challenge {
     use super::*;
 
     pub fn store_name(ctx: Context<StoreName>, name: String) -> Result<()> {
-        let name_account = &mut ctx.accounts.name_account;
-        name_account.name = name;
+        ctx.accounts.name_account.name = name;
         Ok(())
     }
 
+    // View function to get the name
     pub fn get_name(ctx: Context<GetName>) -> Result<String> {
         Ok(ctx.accounts.name_account.name.clone())
     }
@@ -19,16 +19,21 @@ pub mod name_storage {
 
 #[derive(Accounts)]
 pub struct StoreName<'info> {
-    #[account(init, payer = user, space = 8 + 32)]
+    #[account(
+        init,
+        payer = user,
+        space = 8 + 4 + 50, // 8 header + 4 bytes for string length + 50 chars
+        seeds = [b"name", user.key().as_ref()], // Explicit PDA seeds
+        bump
+    )]
     pub name_account: Account<'info, NameAccount>,
     #[account(mut)]
     pub user: Signer<'info>,
     pub system_program: Program<'info, System>,
 }
-
 #[derive(Accounts)]
 pub struct GetName<'info> {
-    #[account()]
+    #[account()] // No mutability needed for view
     pub name_account: Account<'info, NameAccount>,
 }
 

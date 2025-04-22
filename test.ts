@@ -1,71 +1,50 @@
 import * as anchor from '@coral-xyz/anchor';
 import { Program } from '@coral-xyz/anchor';
-import { PublicKey, Keypair, SystemProgram } from '@solana/web3.js';
-import { NameStorage } from './target/types/name_storage';
+import { Keypair, SystemProgram } from '@solana/web3.js';
 import fs from 'fs';
+import { PurposeChallenge } from './target/types/purpose_challenge';
 
-
-
-// Load your wallet from user.json
+// Load wallet
 const walletKeypair = Keypair.fromSecretKey(
-    new Uint8Array(JSON.parse(fs.readFileSync('user.json', 'utf-8')))
-  );
+  new Uint8Array(JSON.parse(fs.readFileSync('user.json', 'utf-8')))
+);
 
-  // Manually configure provider for devnet
-const connection = new anchor.web3.Connection(
-    'https://api.devnet.solana.com',
-    'confirmed'
-  );
-  
-const wallet = new anchor.Wallet(walletKeypair);
+//check provider
+console.log("Cluster:", anchor.getProvider().connection.rpcEndpoint);
 
-const provider = new anchor.AnchorProvider(
-    connection,
-    new anchor.Wallet(walletKeypair),
-    { commitment: 'confirmed' }
-  );
+
+// Configure provider
+const provider = anchor.AnchorProvider.env();
 anchor.setProvider(provider);
 
-
-// Program ID - same as in your Rust program
-const programId = new PublicKey("9aTf53g8P77aop423jgNCL7hapZ2drU7bnPJxuuudZqe");
-
-
-// Create the program client
-const program = anchor.workspace.NameStorage as Program<NameStorage>;
-
-console.log('Program: ', program)
+// Load program
+const programId = new anchor.web3.PublicKey("9aTf53g8P77aop423jgNCL7hapZ2drU7bnPJxuuudZqe");
+const program = anchor.workspace.PurposeChallenge as Program<PurposeChallenge>;
 
 async function main() {
-  console.log("Wallet public key:", wallet.publicKey.toString());
-
-  // Generate a PDA for the name account
-  const [nameAccountPDA] = await PublicKey.findProgramAddressSync(
-    [Buffer.from("name"), wallet.publicKey.toBuffer()],
-    programId
+  // Generate PDA for name account
+  const [nameAccountPDA] = anchor.web3.PublicKey.findProgramAddressSync(
+    [Buffer.from("name"), provider.wallet.publicKey.toBuffer()],
+    program.programId
   );
 
-  console.log("Name account PDA:", nameAccountPDA.toString());
+  // Store name
+  console.log("Storing name...");
+  await program.methods.storeName("Alice")
+    .accounts({
+      nameAccount: nameAccountPDA,
+      user: provider.wallet.publicKey,
+      systemProgram: SystemProgram.programId,
+    })
+    .rpc();
 
-  // Store a name
-  try {
-    console.log("Storing name...");
-    const tx = await program.methods.storeName("Alice")
-      .accounts({
-        nameAccount: nameAccountPDA,
-        user: walletKeypair.publicKey,
-        systemProgram: SystemProgram.programId
-      })
-      .rpc();
-    
-    console.log("Transaction successful! Signature:", tx);
+  // Get name
+  console.log("Retrieving name...");
+  const name = await program.methods.getName()
+    .accounts({ nameAccount: nameAccountPDA })
+    .view();
 
-    // Fetch the stored name
-    const nameAccount = await program.account.nameAccount.fetch(nameAccountPDA);
-    console.log("Stored name:", nameAccount.name);
-  } catch (error) {
-    console.error("Error:", error);
-  }
+  console.log("Stored name:", name);
 }
 
 main().catch(console.error);

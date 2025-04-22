@@ -1,3 +1,6 @@
+### SETUP
+nvm install node
+yarn install
 ### Installed Versions:
 ```
 Rust: rustc 1.86.0 (05f9846f8 2025-03-31)
@@ -8,23 +11,37 @@ Yarn: 1.22.22
 ```
 
 ### Troubleshooting
-anchor 0.31.0 has an anchor build bug, better us this command:
 
+
+### Identifiers:
+```
+Program Id: 3qJ7i6VosNpuJieRHAywaLjEo8JacU8RSkhxuuG3tPq3
+User Account:FRgf258GiRydex8LCehv1fJzMz9ibgM7LJcR7Uoe1K7v
+```
+
+### TEST LOCALLY
+
+This test is  going to use the test/purpose-challenge.ts file to do a local test with a local solana instance
+
+### 1. *Important: in a separate terminal run an instance of solana locally:
+```
+solana config set --url localhost  # local config
+solana-test-validator
+```
+
+### 2. fund some solana to the current user.json wallet:
+```
+solana airdrop 10 $(solana-keygen pubkey user.json)
+```
+
+### 3. Build the program
+anchor 0.31.0 has an anchor build bug, better us this command(further explaining):
 ```
 RUSTUP_TOOLCHAIN=nightly-2025-04-14 anchor build
 ```
 
-### Identifiers:
+### 4. run the test locally:
+*Important: 
 ```
-Program Id: 9aTf53g8P77aop423jgNCL7hapZ2drU7bnPJxuuudZqe
-Signature: 57RYVum1xbS9GqcM2H7o5gW1mhd46hUJGY8Fvpvosg8PbNTS6mPwr3Hu3mmiS9Jn6aohaoEaupC2fdpMeuc3QoBw
-User Account:H3KnFfpRXkbzqxQ5pG9Mz3KwDjnWa3pGu7HSHJDyBiNc
-Name Account:6YV1Up6vvnmUAeyTsaAYQrQQ1FfHqSdiyK47kHTx8uC6
+RUSTUP_TOOLCHAIN=nightly-2025-04-14 anchor test 
 ```
-
-### SETUP
-nvm install node
-yarn install
-
-### TEST
-node test.js  #has some dependency issues
